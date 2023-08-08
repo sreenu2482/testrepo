@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+	stages {
+		stage ('CLEAN') {
+			steps {
+				deleteDir()
+			}
+		}
+		stage ('SCM') {
+			steps {
+				checkout([$class: 'GitSCM',
+				userRemoteConfigs: [[credentialsId: 'Github-Token', url: 'https://github.com/sreenu2482/testrepo.git']],
+				branches: [[name: 'main']],
+				extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir:"sreenu"],
+				[$class: 'CheckoutOption', timeout:60]]])
+			}
+		}
+		stage ('BUILD') {
+			steps {
+				script {
+					dir("${WORKSPACE}") {
+						bat """
+						cd sreenu
+						python dev1.py
+						"""
+					}
+				}
+			}
+		}
+		stage("PUBLISH"){
+            steps{
+                withAWS(region:"us-east-2", credentials:"AWS_CREDNETIAL_ID"){
+					s3Upload(file:"dev1.py", bucket:"testfiles22", path:"sreenu/")
+                }
+			}
+		}
+	}
+}
+2b
+purnima.reddyg@gmail.com
+AccessKey: AKIA5VFOBSHTTVXJNXV
+SecretKey: RXJVj3VhrS2oi2IEClkRcL10uo+icaZ5uaxzhR4
